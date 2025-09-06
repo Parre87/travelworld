@@ -1,0 +1,14 @@
+{% extends 'bookings/base.html' %}
+{% block content %}
+<h1>Available Destinations</h1>
+<div class="grid">
+  {% for d in destinations %}
+    <div class="card">
+      <h2>{{ d.name }}</h2>
+      <p>{{ d.description }}</p>
+      <p><strong>${{ d.price }}</strong></p>
+      <a href="{% url 'book_trip' d.id %}">Book Now</a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
