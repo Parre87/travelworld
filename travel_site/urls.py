@@ -15,7 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.http import HttpResponse
+
+def index(_request):
+    return HttpResponse("Hello from Django on Heroku! 🎉")
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
+    path("", index, name="home"),   # <-- homepage
 ]
