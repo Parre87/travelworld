@@ -1,4 +1,3 @@
-```text
 # TravelWorld ✈️
 
 
@@ -234,6 +233,7 @@ Travel destination images are used to inspire users, sourced from [Unsplash](htt
 ```bash
 git clone https://github.com/Parre87/TravelWorld.git
 cd TravelWorld
+
 
 
 
