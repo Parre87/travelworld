@@ -46,7 +46,88 @@ A Django-based web application for searching trips, booking tickets, and managin
 ## Design
 
 ### Wireframes
-(Add screenshots here if available).
+
+- Notes & hierarchy
+- Primary CTA: Search trips (in hero search panel).
+- Navigation priority: Find trips, My bookings, Deals, Sign in.
+- Trust & clarity: 3 value-prop blocks directly under search.
+- Discovery: “Popular right now” grid/cards.
+
+Footer: three informational columns.
+┌──────────────────────────────────────────────────────────────────────────┐
+│ HEADER                                                                   │
+│  [TravelWorld]      [Find trips]  [My bookings]  [Deals]        [Sign in]│
+├──────────────────────────────────────────────────────────────────────────┤
+│ HERO                                                                     │
+│  "Your next escape, perfectly planned."                                  │
+│  Compare flights and stays, lock the best deals, ...                     │
+│                                                                          │
+│  SEARCH PANEL                                                            │
+│  ┌─────────┬─────────┬─────────┬─────────┬───────────────┬─────────────┐ │
+│  │ From    │ To      │ Depart  │ Return  │ Travellers ▼  │ [ Search ]  │ │
+│  └─────────┴─────────┴─────────┴─────────┴───────────────┴─────────────┘ │
+├──────────────────────────────────────────────────────────────────────────┤
+│ VALUE PROPS (3-up)                                                       │
+│  [Best Price Promise]   [Flexible Options]   [24/7 Human Support]        │
+│  No hidden fees...       Free 24-hour ...     Real people...             │
+├──────────────────────────────────────────────────────────────────────────┤
+│ FEATURE / IMAGE STRIP (optional hero image)                              │
+│  [ Sunrise view over mountains ]                                         │
+├──────────────────────────────────────────────────────────────────────────┤
+│ POPULAR RIGHT NOW                                                        │
+│  ┌────────────┬────────────┬────────────┬────────────┐                   │
+│  │Paris €129  │Tokyo €499  │New York€399│Maldives€799│                   │
+│  └────────────┴────────────┴────────────┴────────────┘                   │
+├──────────────────────────────────────────────────────────────────────────┤
+│ (IF NEEDED ON HOME) MY BOOKINGS (empty state)                            │
+│  "No bookings yet—find a trip above..."                                  │
+│                                                                          │
+│ (IF NEEDED) CONFIRM YOUR BOOKING (compact form)                          │
+│  Contact name | Contact email      Total: €0     [Cancel] [Confirm]      │
+├──────────────────────────────────────────────────────────────────────────┤
+│ FOOTER (3 columns)                                                       │
+│  Company: About | Careers | Press                                        │
+│  Support: Help Center | Contact | Cancellations                          │
+│  Legal: Terms | Privacy | Cookies                                        │
+│  © TravelWorld. All rights reserved.                                     │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ HEADER                                   │
+│ [☰] TravelWorld               [Sign in] │
+├──────────────────────────────────────────┤
+│ HERO                                     │
+│ "Your next escape..."                    │
+│ Subtitle text...                         │
+│                                          │
+│ SEARCH PANEL                             │
+│ [ From            ]                      │
+│ [ To              ]                      │
+│ [ Depart ]  [ Return ]                   │
+│ [ Travellers ▼ ]                         │
+│ [   Search trips   ]                     │
+├──────────────────────────────────────────┤
+│ VALUE PROPS (stacked)                    │
+│ [Best Price Promise]                     │
+│ [Flexible Options]                       │
+│ [24/7 Human Support]                     │
+├──────────────────────────────────────────┤
+│ FEATURE IMAGE                            │
+│ [ Mountain sunrise ]                     │
+├──────────────────────────────────────────┤
+│ POPULAR RIGHT NOW (cards / carousel)     │
+│ [ Paris €129 ]                           │
+│ [ Tokyo €499 ]                           │
+│ [ New York €399 ]                        │
+│ [ Maldives €799 ]                        │
+├──────────────────────────────────────────┤
+│ FOOTER (stacked lists)                   │
+│ Company | Support | Legal                │
+│ © TravelWorld                            │
+└──────────────────────────────────────────┘
+
+
+.
 
 ### Colour Scheme
 - Primary: Blue (calm and travel-related)  
@@ -150,6 +231,7 @@ Travel destination images are used to inspire users, sourced from [Unsplash](htt
 ```bash
 git clone https://github.com/Parre87/TravelWorld.git
 cd TravelWorld
+
 
 
 
