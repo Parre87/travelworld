@@ -329,227 +329,242 @@
   </footer>
 
   <script>
-    // --- Helpers -------------------------------------------------------------
-    const $ = sel => document.querySelector(sel);
-    const el = (tag, attrs={}, children=[]) => {
-      const n = document.createElement(tag);
-      Object.entries(attrs).forEach(([k,v]) => {
-        if (k === 'class') n.className = v;
-        else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
-        else n.setAttribute(k, v);
-      });
-      (Array.isArray(children)?children:[children]).filter(Boolean).forEach(c => {
-        if (typeof c === 'string') n.appendChild(document.createTextNode(c));
-        else n.appendChild(c);
-      });
-      return n;
-    };
-    const fmt = n => new Intl.NumberFormat('en-150', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+  const $ = sel => document.querySelector(sel);
+  const el = (tag, attrs={}, children=[]) => {
+    const n = document.createElement(tag);
+    Object.entries(attrs).forEach(([k,v]) => {
+      if (k === 'class') n.className = v;
+      else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    });
+    (Array.isArray(children)?children:[children]).filter(Boolean).forEach(c => {
+      if (typeof c === 'string') n.appendChild(document.createTextNode(c));
+      else n.appendChild(c);
+    });
+    return n;
+  };
+  const fmt = n => new Intl.NumberFormat('en-150', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+  const todayISO = () => { const t = new Date(); t.setHours(0,0,0,0); return t.toISOString().slice(0,10); };
 
-    // Simple price table (fallback to 199)
-    const CITY_PRICE = {
-      'Paris':129, 'Tokyo':499, 'New York':399, 'Maldives':799,
-      'London':159, 'Rome':139, 'Barcelona':129, 'Berlin':119
-    };
+  // CSRF for Django (reads cookie set by CsrfViewMiddleware)
+  function getCookie(name) {
+    const v = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : null;
+  }
+  const csrftoken = getCookie('csrftoken');
 
-    const todayISO = () => {
-      const t = new Date();
-      t.setHours(0,0,0,0);
-      return t.toISOString().slice(0,10);
-    };
+  // State
+  let currentTrip = null;   // {id, origin, destination, depart_date, return_date, price_eur, ...}
+  let currentTravellers = 1;
 
-    // LocalStorage
-    const LS_KEY = 'tw_bookings_v1';
-    const loadBookings = () => {
-      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-      catch { return []; }
-    };
-    const saveBookings = (b) => localStorage.setItem(LS_KEY, JSON.stringify(b));
+  // Min dates
+  $('#depart').setAttribute('min', todayISO());
+  $('#return').setAttribute('min', todayISO());
 
-    const genRef = () => 'TRV-' + Math.random().toString(36).slice(2,9).toUpperCase();
+  // Search: call /api/search
+  $('#searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const origin = $('#from').value.trim();
+    const destination = $('#to').value.trim();
+    const depart = $('#depart').value;
+    const ret = $('#return').value || '';
+    currentTravellers = parseInt($('#travellers').value, 10) || 1;
 
-    // --- State ---------------------------------------------------------------
-    let currentOption = null;   // option user is booking
-    let bookings = loadBookings();
+    if (!origin || !destination || !depart) {
+      alert('Please fill From, To and Depart.');
+      return;
+    }
 
-    // --- UI Setup ------------------------------------------------------------
-    // enforce min dates
-    $('#depart').setAttribute('min', todayISO());
-    $('#return').setAttribute('min', todayISO());
+    const q = new URLSearchParams({ from: origin, to: destination, depart, return: ret });
+    const res = await fetch(`/api/search?${q.toString()}`, { credentials: 'same-origin' });
+    if (!res.ok) { alert('Search failed'); return; }
+    const data = await res.json();
+    renderResults(data.trips || []);
+  });
 
-    // Search handler
-    $('#searchForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const origin = $('#from').value.trim();
-      const destination = $('#to').value.trim();
-      const depart = $('#depart').value;
-      const ret = $('#return').value || null;
-      const travellers = parseInt($('#travellers').value, 10) || 1;
+  function renderResults(trips) {
+    const list = $('#resultList');
+    list.innerHTML = '';
+    $('#results').hidden = false;
 
-      if (!origin || !destination || !depart) {
-        alert('Please fill From, To and Depart.');
-        return;
-      }
+    if (!trips.length) {
+      list.appendChild(el('div', { class:'row' }, 'No trips found.'));
+      return;
+    }
 
-      // Compute a simple price: base city price (if known) * travellers
-      const base = CITY_PRICE[destination.split(/[ (]/)[0]] || 199;
-      const total = Math.max(49, base) * travellers;
+    // For simplicity show the first best match
+    const t = trips[0];
+    currentTrip = t;
 
-      currentOption = { origin, destination, depart, return: ret, travellers, total };
+    const total = Number(t.price_eur) * currentTravellers;
 
-      // Render one option card
-      const card = el('div', { class:'row' }, [
-        el('div', {}, [
-          el('div', { class:'muted' }, `${depart}${ret ? ' → '+ret : ''}`),
-          el('div', {}, [el('strong', {}, `${origin} → ${destination}`)]),
-          el('div', { class:'muted' }, `${travellers} traveller${travellers>1?'s':''}`)
-        ]),
-        el('div', {}, [
-          el('div', { class:'pill ok', id:'priceNow' }, `Total: ${fmt(total)}`),
-          el('div', { class:'actions', style:'margin-top:8px' }, [
-            el('button', { class:'btn btn-primary', onclick: () => openModal(currentOption) }, 'Book')
-          ])
+    const card = el('div', { class:'row' }, [
+      el('div', {}, [
+        el('div', { class:'muted' }, `${t.depart_date}${t.return_date ? ' → ' + t.return_date : ''}`),
+        el('div', {}, [el('strong', {}, `${t.origin} → ${t.destination}`)]),
+        el('div', { class:'muted' }, `${currentTravellers} traveller${currentTravellers>1?'s':''} • ${t.seats_available} seats left`)
+      ]),
+      el('div', {}, [
+        el('div', { class:'pill ok', id:'priceNow' }, `Total: ${fmt(total)}`),
+        el('div', { class:'actions', style:'margin-top:8px' }, [
+          el('button', { class:'btn btn-primary', onclick: () => openModal(t, total) }, 'Book')
         ])
+      ])
+    ]);
+
+    list.appendChild(card);
+    document.location.hash = '#results';
+  }
+
+  function openModal(trip, total){
+    $('#summaryText').textContent =
+      `${trip.origin} → ${trip.destination} • ${trip.depart_date}${trip.return_date ? ' → '+trip.return_date : ''} • ` +
+      `${currentTravellers} traveller${currentTravellers>1?'s':''}`;
+    $('#pricePill').textContent = `Total: ${fmt(total)}`;
+
+    // Keep last contact for convenience
+    const last = JSON.parse(localStorage.getItem('tw_last_contact') || '{}');
+    if (last.name) $('#contact_name').value = last.name;
+    if (last.email) $('#contact_email').value = last.email;
+
+    $('#bookModal').classList.add('show');
+    $('#bookModal').setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    $('#bookModal').classList.remove('show');
+    $('#bookModal').setAttribute('aria-hidden','true');
+    $('#bookForm').reset();
+  }
+  $('#cancelBtn').addEventListener('click', closeModal);
+  $('#bookModal').addEventListener('click', (e) => { if (e.target.id === 'bookModal') closeModal(); });
+
+  // Confirm booking -> POST /api/book
+  $('#bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('#contact_name').value.trim();
+    const email = $('#contact_email').value.trim();
+    if (!name || !email) return;
+
+    const total = Number(currentTrip.price_eur) * currentTravellers;
+
+    const res = await fetch('/api/book', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken || ''
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        trip_id: currentTrip.id,
+        passengers: currentTravellers,
+        contact_name: name,
+        contact_email: email
+      })
+    });
+
+    if (res.status === 401) {
+      const j = await res.json().catch(() => ({}));
+      window.location.href = j.login_url || '/accounts/login/';
+      return;
+    }
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      alert('Booking failed: ' + (j.detail || res.statusText));
+      return;
+    }
+
+    localStorage.setItem('tw_last_contact', JSON.stringify({ name, email }));
+    closeModal();
+    toast('Booked! Check your history below.');
+    await loadHistory();
+    document.location.hash = '#history';
+  });
+
+  // History: GET /api/bookings
+  async function loadHistory(){
+    const list = $('#bookingList');
+    list.innerHTML = '';
+    $('#noBookings').hidden = true;
+
+    const res = await fetch('/api/bookings', { credentials: 'same-origin' });
+    if (res.status === 401) {
+      $('#noBookings').hidden = false;
+      $('#noBookings').textContent = 'Sign in to see your booking history.';
+      return;
+    }
+    if (!res.ok) {
+      $('#noBookings').hidden = false;
+      $('#noBookings').textContent = 'Could not load bookings.';
+      return;
+    }
+    const data = await res.json();
+    const bookings = data.bookings || [];
+    if (!bookings.length) {
+      $('#noBookings').hidden = false;
+      $('#noBookings').textContent = 'No bookings yet—find a trip above to get started.';
+      return;
+    }
+
+    bookings.forEach(b => {
+      const statusPill = el('span', { class:'pill ' + (b.status === 'CONFIRMED' ? 'ok' : 'danger') }, b.status);
+      const ref = el('strong', {}, b.reference);
+      const when = b.depart + (b.return ? ' → ' + b.return : '');
+      const route = `${b.origin} → ${b.destination}`;
+      const info = el('div', {}, [
+        el('div', { class:'muted' }, when),
+        el('div', {}, [ref, document.createTextNode(' — ' + route)]),
+        el('div', { class:'muted' }, `${b.travellers} pax • ${fmt(b.total)}`)
       ]);
 
-      $('#resultList').innerHTML = '';
-      $('#resultList').appendChild(card);
-      $('#results').hidden = false;
-      document.location.hash = '#results';
+      const cancelBtn = el('button', {
+        class:'btn btn-ghost',
+        onclick: () => cancelBooking(b.reference),
+        disabled: b.status !== 'CONFIRMED'
+      }, 'Cancel');
+
+      const row = el('div', { class:'row' }, [
+        info,
+        el('div', {}, [
+          statusPill,
+          el('div', { class:'actions', style:'margin-top:8px' }, [cancelBtn])
+        ])
+      ]);
+      $('#bookingList').appendChild(row);
+    });
+  }
+
+  // Cancel: POST /api/cancel/<ref>
+  async function cancelBooking(ref){
+    if (!confirm(`Cancel booking ${ref}?`)) return;
+    const res = await fetch(`/api/cancel/${encodeURIComponent(ref)}`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken || '' },
+      credentials: 'same-origin'
     });
 
-    function openModal(opt){
-      $('#summaryText').textContent =
-        `${opt.origin} → ${opt.destination} • ${opt.depart}${opt.return ? ' → '+opt.return : ''} • ` +
-        `${opt.travellers} traveller${opt.travellers>1?'s':''}`;
-      $('#pricePill').textContent = `Total: ${fmt(opt.total)}`;
-      // Prefill from last contact
-      const last = JSON.parse(localStorage.getItem('tw_last_contact') || '{}');
-      if (last.name) $('#contact_name').value = last.name;
-      if (last.email) $('#contact_email').value = last.email;
-
-      $('#bookModal').classList.add('show');
-      $('#bookModal').setAttribute('aria-hidden','false');
+    if (res.status === 401) {
+      const j = await res.json().catch(() => ({}));
+      window.location.href = j.login_url || '/accounts/login/';
+      return;
     }
-    function closeModal(){
-      $('#bookModal').classList.remove('show');
-      $('#bookModal').setAttribute('aria-hidden','true');
-      $('#bookForm').reset();
+    if (!res.ok) {
+      alert('Cancellation failed.');
+      return;
     }
-    $('#cancelBtn').addEventListener('click', closeModal);
-    $('#bookModal').addEventListener('click', (e) => {
-      if (e.target.id === 'bookModal') closeModal();
-    });
+    toast('Booking cancelled.');
+    await loadHistory();
+  }
 
-    // Confirm booking
-    $('#bookForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = $('#contact_name').value.trim();
-      const email = $('#contact_email').value.trim();
-      if (!name || !email) return;
+  function toast(msg){
+    const t = el('div', { class:'pill ok', style:'position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:99' }, msg);
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2200);
+  }
 
-      const booking = {
-        reference: genRef(),
-        status: 'CONFIRMED',
-        created_at: new Date().toISOString(),
-        origin: currentOption.origin,
-        destination: currentOption.destination,
-        depart: currentOption.depart,
-        return: currentOption.return,
-        travellers: currentOption.travellers,
-        total: currentOption.total,
-        contact_name: name,
-        contact_email: email,
-        events: [{ kind:'CREATED', at:new Date().toISOString(), note:'Booking confirmed' }]
-      };
+  // Init
+  document.getElementById('year').textContent = new Date().getFullYear();
+  loadHistory();
+</script>
 
-      // Save
-      bookings.unshift(booking);
-      saveBookings(bookings);
-      localStorage.setItem('tw_last_contact', JSON.stringify({ name, email }));
-
-      // Refresh UI
-      renderBookings();
-      closeModal();
-
-      // Soft toast
-      const toast = el('div', { class:'pill ok', style:'position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:99' }, `Booked! Ref ${booking.reference}`);
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2200);
-      document.location.hash = '#history';
-    });
-
-    function renderBookings(){
-      const list = $('#bookingList');
-      list.innerHTML = '';
-      if (!bookings.length) {
-        $('#noBookings').hidden = false;
-        return;
-      }
-      $('#noBookings').hidden = true;
-
-      bookings.forEach(b => {
-        const statusPill = el('span', { class:'pill ' + (b.status === 'CONFIRMED' ? 'ok' : 'danger') }, b.status);
-        const ref = el('strong', {}, b.reference);
-        const when = b.depart + (b.return ? ' → ' + b.return : '');
-        const route = `${b.origin} → ${b.destination}`;
-        const info = el('div', {}, [
-          el('div', { class:'muted' }, when),
-          el('div', {}, [ref, document.createTextNode(' — ' + route)]),
-          el('div', { class:'muted' }, `${b.travellers} pax • ${fmt(b.total)}`)
-        ]);
-
-        const cancelBtn = el('button', {
-          class:'btn btn-ghost',
-          onclick: () => cancelBooking(b.reference),
-          disabled: b.status !== 'CONFIRMED'
-        }, 'Cancel');
-
-        const viewBtn = el('button', {
-          class:'btn btn-primary',
-          onclick: () => viewBooking(b.reference)
-        }, 'View');
-
-        const row = el('div', { class:'row' }, [
-          info,
-          el('div', {}, [
-            statusPill,
-            el('div', { class:'actions', style:'margin-top:8px' }, [viewBtn, cancelBtn])
-          ])
-        ]);
-        list.appendChild(row);
-      });
-    }
-
-    function viewBooking(ref){
-      const b = bookings.find(x => x.reference === ref);
-      if (!b) return;
-      currentOption = {
-        origin: b.origin, destination: b.destination,
-        depart: b.depart, return: b.return,
-        travellers: b.travellers, total: b.total
-      };
-      $('#contact_name').value = b.contact_name;
-      $('#contact_email').value = b.contact_email;
-      openModal(currentOption);
-      // In view mode we keep Confirm active (acts like duplicate booking). That’s fine for this MVP.
-    }
-
-    function cancelBooking(ref){
-      const idx = bookings.findIndex(x => x.reference === ref);
-      if (idx === -1) return;
-      if (!confirm(`Cancel booking ${ref}?`)) return;
-
-      bookings[idx].status = 'CANCELLED';
-      bookings[idx].events = bookings[idx].events || [];
-      bookings[idx].events.unshift({ kind:'CANCELLED', at:new Date().toISOString(), note:'Cancelled by user' });
-      saveBookings(bookings);
-      renderBookings();
-    }
-
-    // Initial render
-    renderBookings();
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 </html>
