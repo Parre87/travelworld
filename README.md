@@ -149,5 +149,6 @@ Travel destination images are used to inspire users, sourced from [Unsplash](htt
 
 ### Cloning the Repository
 ```bash
-git clone https://github.com/USERNAME/TravelWorld.git
+git clone https://github.com/Parre87/TravelWorld.git
 cd TravelWorld
+
