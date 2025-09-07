@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><title>Booking confirmed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head>
+<body>
+<h1>Booking confirmed 🎉</h1>
+<p>Reference: <strong>{{ booking.reference }}</strong></p>
+<p>{{ booking.trip.origin }} → {{ booking.trip.destination }} on {{ booking.trip.depart_date }}</p>
+<p>Passengers: {{ booking.passengers }} — Total: €{{ booking.total_price_eur }}</p>
+
+
+<h3>History</h3>
+<ul>
+{% for e in booking.events.all %}
+<li>{{ e.at }} — {{ e.kind }} {% if e.note %}({{ e.note }}){% endif %}</li>
+{% empty %}
+<li>No events yet.</li>
+{% endfor %}
+</ul>
+
+
+<p><a href="{% url 'booking:my_bookings' %}">My bookings</a></p>
+</body>
+</html>

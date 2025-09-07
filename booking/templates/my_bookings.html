@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><title>My bookings</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head>
+<body>
+<h1>My bookings</h1>
+{% if bookings %}
+<ul>
+{% for b in bookings %}
+<li>
+<strong>{{ b.reference }}</strong> — {{ b.trip.origin }} → {{ b.trip.destination }} on {{ b.trip.depart_date }} — {{ b.passengers }} pax — Status: {{ b.status }} — €{{ b.total_price_eur }}
+[<a href="{% url 'booking:success' b.reference %}">view</a>]
+{% if b.status != 'CANCELLED' %}
+[<a href="{% url 'booking:cancel' b.reference %}">cancel</a>]
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No bookings yet.</p>
+{% endif %}
+<p><a href="/">Home</a></p>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><title>Book Trip</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+</head>
+<body>
+<h1>Book: {{ trip.origin }} → {{ trip.destination }} on {{ trip.depart_date }}</h1>
+<p>Price per person: €{{ trip.price_eur }} — Seats left: {{ trip.seats_available }}</p>
+
+
+<form method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<button type="submit">Confirm booking</button>
+</form>
+
+
+<p><a href="{% url 'booking:search' %}">Back to search</a></p>
+</body>
+</html>

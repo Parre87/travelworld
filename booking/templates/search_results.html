@@ -1,0 +1,38 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><title>Search results</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+<h1>Search Trips</h1>
+<form method="get">
+Origin: <input name="origin" value="{{ request.GET.origin }}">
+Destination: <input name="destination" value="{{ request.GET.destination }}">
+Depart: <input type="date" name="depart_date" value="{{ request.GET.depart_date }}">
+Return: <input type="date" name="return_date" value="{{ request.GET.return_date }}">
+<button type="submit">Search</button>
+</form>
+
+
+<hr>
+{% if trips %}
+<ul>
+{% for t in trips %}
+<li>
+{{ t.origin }} → {{ t.destination }} on {{ t.depart_date }} {% if t.return_date %}(return {{ t.return_date }}){% endif %}
+— €{{ t.price_eur }} — {{ t.seats_available }} seats
+<a href="{% url 'booking:book' t.id %}?travellers=1">Book</a>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No trips found.</p>
+{% endif %}
+
+
+<p><a href="/">Back home</a></p>
+</body>
+</html>

@@ -16,11 +16,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse
+from django.views.generic import TemplateView
+from django.urls import path, include
 
 def index(_request):
-    return HttpResponse("Hello from Django on Heroku! 🎉")
+    return HttpResponse("Hello from Django on Heroku! ")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", index, name="home"),   # <-- homepage
+    path("", TemplateView.as_view(template_name="bookings/index.html"), name="home"),
+    path('', include('booking.urls')),
+    path('accounts/', include('django.contrib.auth.urls')), # login/logout
+    
 ]
