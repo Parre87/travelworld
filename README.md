@@ -1,12 +1,11 @@
-﻿# travelworld
-
 # TravelWorld ✈️
 
-![Mockup](docs/mockup.png) <!-- Add an AmIResponsive screenshot here -->
+
+![Mockup](docs/mockup.png) 
 
 A Django-based web application for searching trips, booking tickets, and managing reservations. The project includes a modern user interface, built-in authentication, and a JSON API for integrations.  
 
-🔗 **Live site:** _[Link to deployed site here]_  
+🔗 **Live site:** _[https://your-travelworld-app-3a2a4e74772e.herokuapp.com/]_  
 
 ---
 
@@ -151,4 +150,5 @@ Travel destination images are used to inspire users, sourced from [Unsplash](htt
 ```bash
 git clone https://github.com/Parre87/TravelWorld.git
 cd TravelWorld
+
 
