@@ -24,7 +24,7 @@ def index(_request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", TemplateView.as_view(template_name="bookings/index.html"), name="home"),
+    path("", TemplateView.as_view(template_name="index.html"), name="home"),
     path('', include('booking.urls')),
     path('accounts/', include('django.contrib.auth.urls')), # login/logout
     path("api/", include("booking.api_urls")),

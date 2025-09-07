@@ -8,6 +8,12 @@ import os
 import dj_database_url
 from dotenv import load_dotenv
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # package not installed (e.g., on Heroku), no problem
+    def load_dotenv(*args, **kwargs):
+        return False
+
 # Load .env file (for local dev only; in prod use platform env vars)
 load_dotenv()
 
@@ -42,7 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "bookings",
+
     "booking",
 ]
 
