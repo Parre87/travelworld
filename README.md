@@ -54,6 +54,8 @@ A Django-based web application for searching trips, booking tickets, and managin
 - Discovery: “Popular right now” grid/cards.
 
 Footer: three informational columns.
+
+```text
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ HEADER                                                                   │
 │  [TravelWorld]      [Find trips]  [My bookings]  [Deals]        [Sign in]│
@@ -231,6 +233,7 @@ Travel destination images are used to inspire users, sourced from [Unsplash](htt
 ```bash
 git clone https://github.com/Parre87/TravelWorld.git
 cd TravelWorld
+
 
 
 
